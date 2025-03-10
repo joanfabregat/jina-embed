@@ -1,0 +1,46 @@
+# Copyright (c) 2025 Joan Fabrégat <j@fabreg.at>
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, subject to the conditions in the full MIT License.
+# The Software is provided "as is", without warranty of any kind.
+
+services:
+  embedding-bm42:
+    container_name: embedding-bm42
+    image: embedding-service-bm42:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - PORT=80
+        - EMBEDDING_MODEL=bm42
+        - DEPENDENCIES_GROUP=fastembed
+    ports:
+      - "8080:80"
+
+  embedding-jina:
+    container_name: embedding-jina
+    image: embedding-service-jina:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - PORT=80
+        - EMBEDDING_MODEL=jina
+        - DEPENDENCIES_GROUP=transformers
+    ports:
+      - "8081:80"
+
+  embedding-e5:
+    container_name: embedding-e5
+    image: embedding-service-e5:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - PORT=80
+        - EMBEDDING_MODEL=e5
+        - DEPENDENCIES_GROUP=transformers
+    ports:
+      - "8082:80"
