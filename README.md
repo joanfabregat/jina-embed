@@ -1,6 +1,6 @@
 # Multilingual Embedding API
 
-A FastAPI service that provides multilingual text embeddings using the `jinaai/jina-embeddings-v3` model.
+A FastAPI service that provides multilingual text embeddings using the [`jinaai/jina-embeddings-v3`](https://huggingface.co/jinaai/jina-embeddings-v3) model.
 
 ## Overview
 
@@ -36,11 +36,11 @@ The service automatically selects the optimal device (CUDA GPU, Apple MPS, or CP
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd multilingual-embedding-api
+git clone https://github.com/joanfabregat/jina-embed
+cd jina-embed
 
 # Install dependencies
-pip install -r requirements.txt
+uv sync --frozen --no-default-groups
 
 # Download the model (optional, will be downloaded on first run otherwise)
 python main.py download
