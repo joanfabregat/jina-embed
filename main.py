@@ -13,6 +13,7 @@ import time
 
 import torch
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field, conlist
 from transformers import AutoTokenizer, AutoModel
 
@@ -63,7 +64,7 @@ class CountTokensResponse(BaseModel):
     computation_time: float = Field(..., description="Time taken to compute the reranking in seconds")
 
 
-class RootResponse(BaseModel):
+class InfoResponse(BaseModel):
     model_name: str = MODEL_NAME
     device: str
     version: str = VERSION
@@ -99,6 +100,7 @@ try:
         else torch.device("mps") if torch.mps.is_available()
         else torch.device("cpu")
     )
+    model.eval()
     model.to(device)
     logger.info(f"Model {MODEL_NAME} loaded successfully")
 except Exception as e:
@@ -108,10 +110,15 @@ except Exception as e:
 ##
 # Routes
 ##
-@app.get("/", response_model=RootResponse)
-def root() -> RootResponse:
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/info", response_model=InfoResponse)
+def info() -> InfoResponse:
     """Get the root endpoint."""
-    return RootResponse(device=str(device))
+    return InfoResponse(device=str(device))
 
 
 # noinspection PyTypeChecker
