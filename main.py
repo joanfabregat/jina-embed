@@ -26,7 +26,6 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 # Load the config
 ##
 MODEL_NAME = "jinaai/jina-embeddings-v3"
-MODEL_REVISION = None  # "f1944de8402dcd5f2b03f822a4bc22a7f2de2eb9"
 VERSION = os.getenv("VERSION") or "unknown"
 BUILD_ID = os.getenv("BUILD_ID") or "unknown"
 COMMIT_SHA = os.getenv("COMMIT_SHA") or "unknown"
@@ -60,11 +59,7 @@ class CountTokensRequest(BaseModel):
 
 
 class CountTokensResponse(BaseModel):
-    class TokensCount(BaseModel):
-        text: str = Field(..., description="Text")
-        tokens_count: int = Field(..., description="Number of tokens in the text")
-
-    tokens_count: list[TokensCount] = Field(..., description="List of token counts for each text")
+    tokens_count: list[int] = Field(..., description="List of token counts for each text")
     computation_time: float = Field(..., description="Time taken to compute the reranking in seconds")
 
 
@@ -92,12 +87,10 @@ try:
     logger.info(f"Loading model {MODEL_NAME}...")
     tokenizer = AutoTokenizer.from_pretrained(
         MODEL_NAME,
-        revision=MODEL_REVISION,
         trust_remote_code=True,
     )
     model = AutoModel.from_pretrained(
         MODEL_NAME,
-        revision=MODEL_REVISION,
         trust_remote_code=True,
         low_cpu_mem_usage=True
     )
@@ -132,21 +125,6 @@ def embed(request: EmbedRequest) -> EmbedResponse:
 
     try:
         start = time.time()
-
-        # Modes the model to the device
-        # global model, device
-        # try:
-        #     model = model.to('cpu')
-        #     model = model.to(device)
-        #     for param in model.parameters():
-        #         if param.device.type != device.type:
-        #             param.data = param.data.to(device)
-        #
-        #     logger.info(f"Successfully moved model to {device}")
-        # except Exception as e:
-        #     logger.warning(f"Failed to move model to {device}, falling back to CPU: {e}", exc_info=True)
-        #     model = model.to('cpu')
-        #     device = torch.device('cpu')
 
         batches: list[str] = [
             request.texts[i:i + request.batch_size]
@@ -188,8 +166,6 @@ def embed(request: EmbedRequest) -> EmbedResponse:
     except Exception as e:
         raise Exception(f"Failed to embed {texts_num} texts: {e}") from e
     finally:
-        # model = model.to('cpu')
-        # logger.info("Moved model back to CPU")
         _force_gc()
 
 
@@ -198,10 +174,7 @@ def count_tokens(request: CountTokensRequest) -> CountTokensResponse:
     """Count the number of tokens in a batch of texts."""
     start = time.time()
     tokens_count = [
-        CountTokensResponse.TokensCount(
-            text=text,
-            tokens_count=len(tokenizer.tokenize(text))
-        ) for text in request.texts
+        len(tokenizer.tokenize(text)) for text in request.texts
     ]
     return CountTokensResponse(
         tokens_count=tokens_count,
