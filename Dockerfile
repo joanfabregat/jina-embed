@@ -5,31 +5,27 @@
 # restriction, subject to the conditions in the full MIT License.
 # The Software is provided "as is", without warranty of any kind.
 
-# --- Builder Stage ---
-FROM python:3.13-slim-bookworm AS builder
+ARG PYTHON_VERSION=3.13
 
-ARG DEPENDENCIES_GROUP
+# --- Builder Stage ---
+FROM python:${PYTHON_VERSION}-slim AS builder
 
 WORKDIR /app
 
-# Install only necessary system dependencies and remove them afterward
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
 
 # Install uv and its dependencies
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN chmod +x /bin/uv /bin/uvx && \
-    uv venv .venv
+    uv venv .venv --python ${PYTHON_VERSION}
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy dependency specification and install production dependencies
 COPY uv.lock pyproject.toml ./
-RUN uv sync --frozen --group ${DEPENDENCIES_GROUP} --no-default-groups
+RUN uv sync --frozen --no-default-groups
 
 
 # --- Final Image ---
-FROM python:3.13-slim-bookworm
+FROM python:${PYTHON_VERSION}-slim
 WORKDIR /app
 
 ARG PORT=8000
@@ -53,7 +49,7 @@ COPY --from=builder /app/.venv .venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy only necessary application files
-COPY app/ ./app/
+COPY main.py .
 
 # Ensure a non-root user
 RUN addgroup --system app && adduser --system --group --no-create-home app && \
@@ -61,10 +57,10 @@ RUN addgroup --system app && adduser --system --group --no-create-home app && \
 USER app
 
 # Download the models
-ENV HF_HOME=/app/cache
-RUN mkdir -p /app/cache && chmod 777 /app/cache && \
-    python -m app.download_model
+ENV HF_HOME=/app/.cache
+RUN mkdir -p /app/.cache && chmod 777 /app/.cache && \
+    python -m main download
 
 # https://cloud.google.com/run/docs/tips/python#optimize_gunicorn
 EXPOSE $PORT
-CMD ["sh", "-c", "uvicorn app.api:api --host 0.0.0.0 --port $PORT --workers 1 --log-level info --timeout-keep-alive 0"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1 --log-level info --timeout-keep-alive 0"]
