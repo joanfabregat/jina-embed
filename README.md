@@ -2,167 +2,110 @@
 
 [![Build and Push to GHCR and Docker Hub](https://github.com/joanfabregat/jina-embed/actions/workflows/build.yaml/badge.svg)](https://github.com/joanfabregat/jina-embed/actions/workflows/build.yaml)
 
-A FastAPI service that provides multilingual text embeddings using the [`jinaai/jina-embeddings-v3`](https://huggingface.co/jinaai/jina-embeddings-v3) model.
+A FastAPI service that provides text embedding capabilities using the [
+`jinaai/jina-embeddings-v3`](https://huggingface.co/jinaai/jina-embeddings-v3) model.
 
 ## Overview
 
-This API allows you to generate vector embeddings for texts in multiple languages. It's built on top of the `jinaai/jina-embeddings-v3` model and provides endpoints for:
-
-- Generating embeddings for text batches
-- Counting tokens in text batches
-
-The service automatically selects the optimal device (CUDA GPU, Apple MPS, or CPU) based on availability.
+This API allows you to generate vector embeddings for text documents using the `jinaai/jina-embeddings-v3` model. The
+service supports different embedding tasks (query and indexing) and is designed to process batches of texts efficiently.
 
 ## Features
 
-- Text embedding generation for various tasks:
-    - Retrieval (query and passage)
-    - Separation
-    - Classification
-    - Text matching
-- Efficient batched processing
-- Automatic hardware acceleration (CUDA, MPS, CPU)
-- Token counting
-- Memory-efficient operation with garbage collection
+- Generate embeddings for multiple texts in a single request
+- Support for both query and index embedding tasks
+- Efficient batch processing
+- Token counting endpoint
+- Service information endpoint
 
 ## Requirements
 
-- Python 3.x
-- PyTorch
-- Transformers
+- Python 3.13+
 - FastAPI
+- fastembed
 - Pydantic
-- Uvicorn
-
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/joanfabregat/jina-embed
-cd jina-embed
-
-# Install dependencies
-uv sync --frozen --no-default-groups
-
-# Download the model (optional, will be downloaded on first run otherwise)
-python main.py download
-```
+- uvicorn
 
 ## Environment Variables
 
-| Variable    | Description                   | Default    |
-|-------------|-------------------------------|------------|
-| VERSION     | API version                   | "unknown"  |
-| BUILD_ID    | Build identifier              | "unknown"  |
-| COMMIT_SHA  | Git commit SHA                | "unknown"  |
-| PORT        | Server port                   | 8000       |
+The service can be configured using the following environment variables:
+
+- `VERSION`: The version of the service (default: "unknown")
+- `BUILD_ID`: The build identifier (default: "unknown")
+- `COMMIT_SHA`: The commit SHA (default: "unknown")
+- `PORT`: The port to run the server on (default: 8000)
 
 ## Usage
 
-### Starting the server
+### Starting the Server
 
-```bash
-python main.py serve
+The recommended way to run this service is using Docker.
+
+```shell
+docker run -p 8000:8000 joanfabregat/jina-embed:latest
 ```
 
-Or directly with uvicorn:
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
+Documentation for the API can be found at `/docs` or `/redoc` when running the server.
 
 ### API Endpoints
 
-#### GET /
+#### GET `/info`
 
-Returns basic information about the service.
-
-**Response Example:**
+Returns information about the service.
 
 ```json
 {
   "model_name": "jinaai/jina-embeddings-v3",
-  "device": "cuda",
   "version": "1.0.0",
-  "build_id": "123",
+  "build_id": "12345",
   "commit_sha": "abc123"
 }
 ```
 
-#### POST /embed
+#### POST `/embed`
 
 Generates embeddings for a list of texts.
 
-**Request Body:**
+Request body:
 
 ```json
 {
-  "texts": ["This is a sample text", "Another example"],
-  "normalize": true,
-  "task": "retrieval.query",
+  "texts": [
+    "This is a sample text",
+    "Another sample text"
+  ],
+  "task": "query",
   "batch_size": 4
 }
 ```
 
-**Available tasks:**
-- `retrieval.query`: Optimize embeddings for search queries
-- `retrieval.passage`: Optimize embeddings for passages/documents
-- `separation`: For text separation tasks
-- `classification`: For classification tasks
-- `text-matching`: For text matching tasks
-
-**Response Example:**
+Response:
 
 ```json
-{
-  "embeddings": [
-    [0.1, 0.2, 0.3, ...],
-    [0.4, 0.5, 0.6, ...]
+[
+  [
+    0.123,
+    0.456,
+    ...
   ],
-  "computation_time": 0.125
-}
+  [
+    0.789,
+    0.012,
+    ...
+  ]
+]
 ```
 
-#### POST /count-tokens
+Parameters:
 
-Counts the number of tokens in a list of texts.
-
-**Request Body:**
-
-```json
-{
-  "texts": ["This is a sample text", "Another example"]
-}
-```
-
-**Response Example:**
-
-```json
-{
-  "tokens_count": [
-    {
-      "text": "This is a sample text",
-      "tokens_count": 5
-    },
-    {
-      "text": "Another example",
-      "tokens_count": 2
-    }
-  ],
-  "computation_time": 0.01
-}
-```
-
-## Performance Considerations
-
-- The service dynamically manages memory using garbage collection
-- For large batches, consider adjusting the `batch_size` parameter to balance between speed and memory usage
-- The service will automatically use GPU acceleration if available
+- `texts`: List of texts to embed (required)
+- `task`: Embedding task, either "query" or "index" (default: "query")
+- `batch_size`: Batch size for processing texts (default: 4)
 
 ## License
 
-MIT License. See the full license text in the code header.
+This project is licensed under the MIT License - see the license notice in the code for details.
 
-## Author
+## Credits
 
-Joan Fabrégat <j@fabreg.at>
+Developed by Joan Fabrégat, j@fabreg.at
