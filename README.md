@@ -1,5 +1,7 @@
 # Multilingual Embedding API
 
+[![Build and Push to GHCR and Docker Hub](https://github.com/joanfabregat/jina-embed/actions/workflows/build.yaml/badge.svg)](https://github.com/joanfabregat/jina-embed/actions/workflows/build.yaml)
+
 A FastAPI service that provides multilingual text embeddings using the [`jinaai/jina-embeddings-v3`](https://huggingface.co/jinaai/jina-embeddings-v3) model.
 
 ## Overview
