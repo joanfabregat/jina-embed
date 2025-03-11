@@ -30,10 +30,10 @@ service supports different embedding tasks (query and indexing) and is designed 
 
 The service can be configured using the following environment variables:
 
+- `PORT`: The port to run the server on (default: 8000)
 - `VERSION`: The version of the service (default: "unknown")
 - `BUILD_ID`: The build identifier (default: "unknown")
 - `COMMIT_SHA`: The commit SHA (default: "unknown")
-- `PORT`: The port to run the server on (default: 8000)
 
 ## Usage
 
