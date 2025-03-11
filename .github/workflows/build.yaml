@@ -5,7 +5,7 @@
 # restriction, subject to the conditions in the full MIT License.
 # The Software is provided "as is", without warranty of any kind.
 
-name: Build and Push Docker Images with Multiple Models to DockerHub and GHCR
+name: Build and Push to GHCR and Docker Hub
 
 on:
   push:
@@ -15,21 +15,16 @@ on:
       - 'v*'
 
 env:
-  DOCKERHUB_IMAGE: "joanfabregat/embedding-service"
-  GHCR_IMAGE: "ghcr.io/joanfabregat/embedding-service"
+  GHCR_IMAGE: ghcr.io/joanfabregat/jina-embed
+  DOCKERHUB_IMAGE: joanfabregat/jina-embed
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        model:
-          - name: "bm42"
-            dependencies_group: "fastembed"
-          - name: "jina"
-            dependencies_group: "transformers"
-          - name: "e5"
-            dependencies_group: "transformers"
 
     steps:
       - name: Checkout repository
@@ -71,10 +66,11 @@ jobs:
             ${{ env.DOCKERHUB_IMAGE }}
             ${{ env.GHCR_IMAGE }}
           tags: |
-            type=semver,pattern={{version}},prefix=${{ matrix.model.name }}-
-            type=semver,pattern={{major}}.{{minor}},prefix=${{ matrix.model.name }}-
-            type=sha,prefix=${{ matrix.model.name }}-
-            type=raw,value=${{ matrix.model.name }}-latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=${{ github.ref_name }}
+            type=raw,event=tag,value=latest
+            type=raw,event=branch,value=${{ github.ref_name }}-${{ github.sha }}
+            type=raw,event=branch,value=${{ github.ref_name }}-latest
+            type=sha
 
       - name: Build and push Docker image with BuildKit caching
         uses: docker/build-push-action@v4
@@ -83,11 +79,9 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:buildcache-${{ matrix.model.name }}
-          cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:buildcache-${{ matrix.model.name }},mode=inline
+          cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:buildcache,mode=inline
           build-args: |
             VERSION=${{ github.ref_name }}
-            DEPENDENCIES_GROUP=${{ matrix.model.dependencies_group }}
-            EMBEDDING_MODEL=${{ matrix.model.name }}
             BUILD_ID=${{ github.run_id }}
             COMMIT_SHA=${{ github.sha }}
