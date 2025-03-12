@@ -1,7 +1,7 @@
 [project]
 name = "jina-embed"
 version = "v0.1.3"
-url = "https://github.com/joanfabregat/jina-embed"
+urls = { "homepage" = "https://github.com/joanfabregat/jina-embed" }
 description = "An API to embed text using Jina"
 authors = [
     { name = "Joan Fabrégat", email = "jfabregat@fogandfrog.com" }
