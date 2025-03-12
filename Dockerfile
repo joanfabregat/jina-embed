@@ -5,6 +5,12 @@
 # restriction, subject to the conditions in the full MIT License.
 # The Software is provided "as is", without warranty of any kind.
 
+
+ARG PORT=8000
+ARG VERSION
+ARG BUILD_ID
+ARG COMMIT_SHA
+ARG COMPUTE_DEVICE=cpu
 ARG PYTHON_VERSION=3.13
 
 # --- Builder Stage ---
@@ -21,25 +27,24 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy dependency specification and install production dependencies
 COPY uv.lock pyproject.toml ./
-RUN uv sync --frozen --no-default-groups
+RUN if [ "$COMPUTE_DEVICE" = "gpu" ]; then \
+      uv sync --group gpu --frozen --no-default-groups; \
+    else \
+      uv sync --frozen --no-default-groups; \
+    fi
 
 
 # --- Final Image ---
 FROM python:${PYTHON_VERSION}-slim
 WORKDIR /app
 
-ARG PORT=8000
-ARG EMBEDDING_MODEL
-ARG VERSION
-ARG BUILD_ID
-ARG COMMIT_SHA
 
 # Prevent Python from writing bytecode files
 ENV PYTHONDONTWRITEBYTECODE=1
 # Ensure that Python outputs are sent directly to terminal without buffering
 ENV PYTHONUNBUFFERED=1
 ENV PORT=${PORT}
-ENV EMBEDDING_MODEL=${EMBEDDING_MODEL}
+ENV COMPUTE_DEVICE=${COMPUTE_DEVICE}
 ENV VERSION=${VERSION}
 ENV BUILD_ID=${BUILD_ID}
 ENV COMMIT_SHA=${COMMIT_SHA}
