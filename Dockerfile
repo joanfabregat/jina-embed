@@ -11,7 +11,7 @@ ARG COMPUTE_DEVICE=cpu
 # --- Builder Stage ---
 FROM python:${PYTHON_VERSION}-slim AS builder
 
-ARG COMPUTE_DEVICE=cpu
+ARG COMPUTE_DEVICE
 
 WORKDIR /app
 
